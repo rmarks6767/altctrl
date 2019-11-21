@@ -32,15 +32,5 @@ namespace glipglop
         }
 
         public void CloseConnection(Device device) => device.Close();
-
-        public void Pressed(Device device)
-        {
-
-        }
-
-        public void Released()
-        {
-
-        }
     }
 }
