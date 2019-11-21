@@ -2,28 +2,17 @@
 
 namespace glipglop
 {
-    /// <summary>
-    /// Events for when a press and a release happen
-    /// </summary>
-    public delegate void PressedDel();
-    public delegate void ReleasedDel();
+    
     public class Device : SerialPort
     {
-        /// <summary>
-        ///  Events for when a button is pressed, add something to this like so:
-        ///  {Device}.Pressed += new Pressed({Function to do when pressed});
-        /// </summary>
-        public PressedDel Pressed;
-
-        /// <summary>
-        ///  Events for when a button is pressed, add something to this like so:
-        ///  {Device}.Released += new Released({Function to do when released});
-        /// </summary>
-        public ReleasedDel Released;
-
         // Just a local variable for taking in input
         private bool pressed;
-        
+
+        /// <summary>
+        /// The name given to a given Device
+        /// </summary>
+        public string name;
+
         /// <summary>
         /// Checks to see if the current state of the device is pressed
         /// </summary>
@@ -39,9 +28,10 @@ namespace glipglop
         /// <summary>
         /// Creates a new version of the device
         /// </summary>
-        public Device(string portName, int baudRate, Parity parity, int dataBits, StopBits stopBits)
+        public Device(string portName, int baudRate, Parity parity, int dataBits, StopBits stopBits, string name)
             : base(portName, baudRate, parity, dataBits, stopBits)
         {
+            this.name = name;
             pressed = false;
         }
     }
