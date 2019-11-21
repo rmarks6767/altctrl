@@ -8,18 +8,34 @@ namespace glipglop
 {
     public class DeviceManager
     {
-
-        List<SerialPort> devices;
+        List<Device> devices;
 
         public DeviceManager()
         {
+            devices = new List<Device>();
+            Thread t = new Thread(new ThreadStart(ReadDataAndConnections));
+            t.Start();
+        }
 
+        public void ReadDataAndConnections()
+        {
+            while(true)
+            {
+                // See if there are any new connections
+
+                // Read Data
+                foreach(Device d in devices)
+                {
+                    ReadData(d, null);
+                }
+            }
         }
 
         public void ReadData(object sender, SerialDataReceivedEventArgs e)
         {
-            if (sender is Device port)
+            if (sender is Device device)
             {
+
             }
         }
 
