@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<package>
+  <metadata>
+    <id>glipglop</id>
+    <version>1.0.0</version>
+    <title>Glip Glop</title>
+    <authors>River Marks</authors>
+    <owners>River Marks</owners>
+    <projectUrl>https://github.com/rmarks6767/altctrl</projectUrl>
+    <iconUrl>https://pbs.twimg.com/media/Ds5HqPSX4AAxLPO.jpg</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>The C# library for the Imagine GDD Alt Controller team so that GDDs can interface with some Rust TM</description>
+    <releaseNotes>Initial 1.0.0 release</releaseNotes>
+    <copyright>Yeah there's no 2019 Copyright</copyright>
+    <tags>glip glop</tags>
+    <dependencies>
+      <dependency id="Newtonsoft.Json" Version="12.0.3"  />
+      <dependency id="System.IO.Ports" Version="4.6.0" />
+    </dependencies>
+    <summary> Yep </summary>
+  </metadata>
+  <files>
+    <file src="Component.cs" />
+    <file src="Delegates.cs" />
+    <file src="DeviceManager.cs" />
+  </files>
+</package>

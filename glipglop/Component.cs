@@ -1,14 +1,7 @@
-using System.Collections.Generic;
 using System.IO.Ports;
 
 namespace glipglop
 {
-    /// <summary>
-    /// Events for when a press and a release happen
-    /// </summary>
-    public delegate void PressedDel();
-    public delegate void ReleasedDel();
-
     public class Component : SerialPort
     {
         /// <summary>
@@ -34,7 +27,7 @@ namespace glipglop
         /// </summary>
         public ReleasedDel Released;
 
-        public Component(string name, string deviceName, string portName, int baudRate, Parity parity, int dataBits, StopBits stopBits)
+        public Component(string name, string deviceName, string portName = "COM3", int baudRate = 112500, Parity parity = Parity.None, int dataBits = 8, StopBits stopBits = StopBits.One)
             : base(portName, baudRate, parity, dataBits, stopBits)
         {
             DeviceName = deviceName;
@@ -44,8 +37,7 @@ namespace glipglop
             Released += new ReleasedDel(ChangeToReleased);
 
             // TODO: Find a good number that we can read well
-            ReadTimeout = 500;
-
+            ReadTimeout = 100;
         }
 
         /// <summary>
@@ -69,5 +61,6 @@ namespace glipglop
         /// Used to change the status of the pressed local variable
         /// </summary>
         private void ChangeToReleased() => pressed = false;
+
     }
 }
