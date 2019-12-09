@@ -2,68 +2,105 @@
 using System.Collections.Generic;
 using System.IO.Ports;
 using System.Threading;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace glipglop
 {
-    /// <summary>
-    /// Events for when a press and a release happen
-    /// </summary>
-    public delegate void PressedDel();
-    public delegate void ReleasedDel();
     public class DeviceManager
     {
-        /// <summary>
-        ///  Events for when a button is pressed, add something to this like so:
-        ///  {Device}.Pressed += new Pressed({Function to do when pressed});
-        /// </summary>
-        public PressedDel Pressed;
+        bool reading;
 
-        /// <summary>
-        ///  Events for when a button is pressed, add something to this like so:
-        ///  {Device}.Released += new Released({Function to do when released});
-        /// </summary>
-        public ReleasedDel Released;
+        // Name of device and device
+        Dictionary<string, List<Component>> devices;
 
-        List<Device> devices;
-
-        public DeviceManager()
+        public DeviceManager(Dictionary<string, List<string>> devicesToCreate)
         {
-            devices = new List<Device>();
-            //Thread t = new Thread(new ThreadStart(ReadDataAndConnections));
-            //t.Start();
+            devices = new Dictionary<string, List<Component>>();
+            CreateDevices(devicesToCreate);
+            reading = true;
+
+            // Break off a thread to run the reading data connections
+            Thread readThread = new Thread(new ThreadStart(ReadDataAndConnections));
+            readThread.Start();
         }
 
         public void ReadDataAndConnections()
         {
-            foreach (Device d in devices)
+            while (reading)
             {
-                ReadData(d, null);
+                foreach (List<Component> list in devices.Values)
+                {
+                    foreach (Component comp in list)
+                    {
+                        Console.WriteLine($"Reading: {comp.Name}");
+                        ReadData(comp, null);
+                    }
+                }
             }
         }
 
         public void ReadData(object sender, SerialDataReceivedEventArgs e)
         {
-            if (sender is Device device)
+            if (sender is Component component)
             {
                 try
                 {
-                    Console.WriteLine(device.ReadLine());
+                    // Get the data
+                    string data = component.ReadLine();
+
+                    // Convert to a json object
+                    JObject j = JObject.FromObject(data);
+
+                    // Get the data from the new JObject
+                    string device = j.Value<string>("device");  // The device name
+                    string port = j.Value<string>("port");     // The port that is in use
+                    string type = j.Value<string>("type");          // Pressed or released
+
+                    // TODO: We could probably assume the device is in the dict
+                    if (devices.ContainsKey(device))
+                    {
+                        Component com = devices[device].Find(comp => comp.Name == port);
+
+                        // Check to make sure we don't have to make this Component
+                        if (com == null)
+                        {
+                            com = new Component(port, device, "COM3", 112500, Parity.None, 8, StopBits.One);
+                            devices[device].Add(com);
+                        }
+
+                        // Check to see if the comp was pressed or released
+                        if (type == "Pressed")
+                        {
+                            com.Pressed();
+                        }
+                        else
+                        {
+                            com.Released();
+                        }
+                    }
                 }
-                catch(Exception ex)
+                catch
                 {
-                    Console.WriteLine(ex.Message);
+                    Console.WriteLine("An Error Occured while reading input!");
                 }
             }
         }
 
-        public void CreateConnection(string portName)
+        public void CreateDevices(Dictionary<string, List<string>> toCreateDevices)
         {
-            Device device = new Device(portName, 112500, Parity.None, 8, StopBits.One, "Button");
-            device.DataReceived += new SerialDataReceivedEventHandler(ReadData);
-            device.Open();
-            devices.Add(device);
+            foreach (string device in toCreateDevices.Keys)
+            {
+                devices.Add(device, new List<Component>());
+
+                foreach(string component in toCreateDevices[device])
+                {
+                    devices[device].Add(new Component(component, device, "COM3", 112500, Parity.None, 8, StopBits.One));
+                }
+            }
         }
 
-        public void CloseConnection(Device device) => device.Close();
+        public void OpenConnection(Component component) => component.Open();
+        public void CloseConnection(Component component) => component.Close();
     }
 }

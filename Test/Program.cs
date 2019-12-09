@@ -12,15 +12,6 @@ namespace glipglop
 
             manager.Pressed += Pressed;
             manager.Released += Released;
-
-            manager.CreateConnection("COM3");
-
-            while (true)
-            {
-                Console.WriteLine("R");
-                manager.ReadDataAndConnections();
-            }
-            Console.WriteLine("RRR");
         }
 
         static void Pressed()
