@@ -104,7 +104,7 @@ namespace glipglop
                         com.Released();
                 }
             }
-            catch(Exception exp)
+            catch (Exception exp)
             {
                 Console.WriteLine($"{exp.Message}");
             }
@@ -120,7 +120,7 @@ namespace glipglop
             {
                 devices.Add(device, new List<Component>());
 
-                foreach(string component in toCreateDevices[device])
+                foreach (string component in toCreateDevices[device])
                 {
                     devices[device].Add(new Component(component, device));
                 }
