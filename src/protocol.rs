@@ -1,5 +1,10 @@
+// Collection of data sturtures that are used to communicate with clients
+
 use serde::{Deserialize, Serialize};
 
+use crate::SerialEvent;
+
+// New window struct
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct NewWindow {
     pub id: String,
@@ -10,9 +15,15 @@ pub struct NewWindow {
     pub height: i32,
 }
 
-// i2c stuff
+// Represents a device in the system
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
-pub enum Button {
+pub enum Device {
+    D0,
+}
+
+// Represents a port on a device in the system
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+pub enum Port {
     B0,
     B1,
     B2,
@@ -23,23 +34,27 @@ pub enum Button {
     B7,
 }
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
-pub enum Devices {
-    D1,
-    D2,
-}
-
-// Serial stuff... well, it's all serial stuff.
-#[derive(Serialize, Deserialize, Debug)]
+// Represents a message coming from the client
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum IncomingMsg {
     CreateWindow(NewWindow),
     DestroyWindow(String),
-    On(Button, Devices),
-    Off(Button, Devices),
+    On(Device, Port),
+    Off(Device, Port),
 }
 
-#[derive(Serialize, Debug)]
+// Represents a message that will be sent to the client
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum OutgoingMsg {
-    Pressed(Button, Devices),
-    Released(Button, Devices),
+    Pressed(Device, Port),
+    Released(Device, Port),
+}
+
+impl From<SerialEvent> for OutgoingMsg {
+    fn from(event: SerialEvent) -> Self {
+        match event {
+            SerialEvent::Pressed(device, button) => OutgoingMsg::Pressed(device, button),
+            SerialEvent::Released(device, button) => OutgoingMsg::Released(device, button),
+        }
+    }
 }
