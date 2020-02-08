@@ -1,8 +1,6 @@
-﻿using System.IO.Ports;
-
-namespace glipglop
+﻿namespace glipglop
 {
-    public class Component : SerialPort
+    public class Component
     {
         /// <summary>
         /// The name of the device that the component belongs to
@@ -27,17 +25,13 @@ namespace glipglop
         /// </summary>
         public ReleasedDel Released;
 
-        public Component(string name, string deviceName, string portName = "COM3", int baudRate = 112500, Parity parity = Parity.None, int dataBits = 8, StopBits stopBits = StopBits.One)
-            : base(portName, baudRate, parity, dataBits, stopBits)
+        public Component(string name, string deviceName)
         {
             DeviceName = deviceName;
             Name = name;
             pressed = false;
             Pressed += new PressedDel(ChangeToPressed);
             Released += new ReleasedDel(ChangeToReleased);
-
-            // TODO: Find a good number that we can read well
-            ReadTimeout = 100;
         }
 
         /// <summary>
@@ -61,6 +55,5 @@ namespace glipglop
         /// Used to change the status of the pressed local variable
         /// </summary>
         private void ChangeToReleased() => pressed = false;
-
     }
 }

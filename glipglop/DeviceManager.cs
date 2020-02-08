@@ -1,112 +1,74 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
+using System.IO.Ports;
 using System.Threading;
-using Newtonsoft.Json.Linq;
 
 namespace glipglop
 {
     public class DeviceManager
     {
-        // Used maybe for changing the state of if it should stop being read
+        /// <summary>
+        /// The different components that are being read from
+        /// </summary>
+        Dictionary<Device, List<Component>> components;
+        Dictionary<string, Device> devices;
+
+        /// <summary>
+        /// The bool to tell the program to read or not read connections
+        /// </summary>
         bool reading;
-        Thread readThread;
 
-        // Name of device and list of components on that device
-        Dictionary<string, List<Component>> devices;
-
-        public DeviceManager(Dictionary<string, List<string>> devicesToCreate)
+        public DeviceManager(Dictionary<string, List<string>> devices)
         {
-            devices = new Dictionary<string, List<Component>>();
-            CreateDevices(devicesToCreate);
+            this.devices = new Dictionary<string, Device>();
+            components = CreateDevices(devices);
             reading = true;
-
-            // Break off a thread to run the reading data connections
-            readThread = new Thread(new ThreadStart(ReadDataAndConnections));
-            readThread.Start();
+            Thread t = new Thread(new ThreadStart(ReadDataAndConnections));
+            t.Start();
         }
 
-        /// <summary>
-        /// Used to pause the reading of serialports
-        /// </summary>
-        public void PauseReading() => reading = false;
+        public void ReadDataAndConnections() { while (reading) { } }
 
-        /// <summary>
-        /// Used to stop the reading of the serial ports.  Calling this will join the thread making the device manager technically useless
-        /// </summary>
-        public void StopReading() => readThread.Join();
-
-        /// <summary>
-        ///  Opens a new connection with one of the given components
-        /// </summary>
-        /// <param name="component">The component to open</param>
-        public void OpenConnection(Component component) => component.Open();
-
-        /// <summary>
-        /// Closes an existing connection with one of the components
-        /// </summary>
-        /// <param name="component">The component to close</param>
-        public void CloseConnection(Component component) => component.Close();
-
-        /// <summary>
-        /// Used on a thread to constantly read data from the connections that we have 
-        /// </summary>
-        public void ReadDataAndConnections()
+        public void ReadData(object sender, SerialDataReceivedEventArgs e)
         {
-            while (reading)
+            if (sender is Device dev)
             {
-                foreach (List<Component> list in devices.Values)
+                try
                 {
-                    foreach (Component comp in list)
+                    string serialInput = dev.ReadLine();
+                    Console.WriteLine(serialInput);
+
+                    // Convert to a json object
+                    Data data = JObject.Parse(serialInput).ToObject<Data>();
+
+                    // Get the data from the new JObject
+
+                    // TODO: We could probably assume the device is in the dict
+                    if (devices.ContainsKey(data.Device))
                     {
-                        Console.WriteLine($"Reading: {comp.Name}");
-                        ReadData(comp);
-                    }
-                }
-            }
-        }
+                        // Get the comp if it exists
+                        Component com = components[devices[data.Device]].Find(comp => comp.Name == data.Port);
 
-        /// <summary>
-        /// Read in the data through the associated Serial Port
-        /// </summary>
-        /// <param name="component">The component to read input from</param>
-        public void ReadData(Component component)
-        {
-            try
-            {
-                // Get the data
-                string data = component.ReadLine();
+                        // Check to make sure we don't have to make this Component
+                        if (com == null)
+                        {
+                            com = new Component(data.Port, data.Device);
+                            components[devices[data.Device]].Add(com);
+                        }
 
-                // Convert to a json object
-                JObject j = JObject.FromObject(data);
-
-                // Get the data from the new JObject
-                string device = j.Value<string>("device"); // The device name
-                string port = j.Value<string>("port");     // The port that is in use
-                string type = j.Value<string>("type");     // Pressed or released
-
-                // TODO: We could probably assume the device is in the dict
-                if (devices.ContainsKey(device))
-                {
-                    // Get the comp if it exists
-                    Component com = devices[device].Find(comp => comp.Name == port);
-
-                    // Check to make sure we don't have to make this Component
-                    if (com == null)
-                    {
-                        com = new Component(port, device);
-                        devices[device].Add(com);
+                        // Check to see if the comp was pressed or released
+                        if (data.Type == "Pressed")
+                            com.Pressed();
+                        else
+                            com.Released();
                     }
 
-                    // Check to see if the comp was pressed or released
-                    if (type == "Pressed")
-                        com.Pressed();
-                    else
-                        com.Released();
                 }
-            }
-            catch (Exception exp)
-            {
-                Console.WriteLine($"{exp.Message}");
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
             }
         }
 
@@ -114,17 +76,26 @@ namespace glipglop
         /// Used to create the devices and the components on those devices
         /// </summary>
         /// <param name="toCreateDevices"></param>
-        public void CreateDevices(Dictionary<string, List<string>> toCreateDevices)
+        public Dictionary<Device, List<Component>> CreateDevices(Dictionary<string, List<string>> devs)
         {
-            foreach (string device in toCreateDevices.Keys)
+            Dictionary<Device, List<Component>> comps = new Dictionary<Device, List<Component>>();
+            foreach (string device in devs.Keys)
             {
-                devices.Add(device, new List<Component>());
+                Device dev = new Device(device, "COM4");
+                dev.DataReceived += new SerialDataReceivedEventHandler(ReadData);
+                dev.Open();
 
-                foreach (string component in toCreateDevices[device])
+                devices.Add(device, dev);
+                comps.Add(dev, new List<Component>());
+
+                foreach (string component in devs[device])
                 {
-                    devices[device].Add(new Component(component, device));
+                    Component comp = new Component(component, device);
+                    comps[dev].Add(comp);
                 }
             }
+
+            return comps;
         }
 
         /// <summary>
@@ -137,11 +108,10 @@ namespace glipglop
         {
             if (devices.ContainsKey(device))
             {
-                Component com = devices[device].Find(comp => comp.Name == component);
-
-                if (com != null)
+                if (devices.ContainsKey(device))
                 {
-                    com.Pressed += pressed;
+                    Component comp = components[devices[device]].Find(com => com.Name == component);
+                    comp.Pressed += pressed;
                 }
             }
         }
@@ -156,11 +126,10 @@ namespace glipglop
         {
             if (devices.ContainsKey(device))
             {
-                Component com = devices[device].Find(comp => comp.Name == component);
-
-                if (com != null)
+                if (devices.ContainsKey(device))
                 {
-                    com.Released += released;
+                    Component comp = components[devices[device]].Find(com => com.Name == component);
+                    comp.Released += released;
                 }
             }
         }
