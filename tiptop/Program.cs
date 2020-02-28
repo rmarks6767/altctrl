@@ -1,6 +1,5 @@
 ﻿/// This is the testing framework for glipglop, to make sure it works
 using System;
-using System.Collections.Generic;
 using glipglop;
 
 namespace tiptop
@@ -9,23 +8,12 @@ namespace tiptop
     {
         static void Main()
         {
-            Dictionary<string, List<string>> devices = new Dictionary<string, List<string>>
-            {
-                {
-                    "D0",
-                    new List<string>()
-                    {
-                        "P0",
-                        "P1",
-                        "P2",
-                        "P3",
-                    }
-                }
-            };
-
-            DeviceManager manager = new DeviceManager(devices);
+            DeviceManager manager = new DeviceManager();
 
             manager.AddPressed(new PressedDel(Pressed), "D0", "P0");
+            manager.AddPressed(new PressedDel(Pressed), "D0", "P1");
+            manager.AddPressed(new PressedDel(Pressed), "D0", "P2");
+            manager.AddPressed(new PressedDel(Pressed), "D0", "P3");
             manager.AddReleased(new ReleasedDel(Released), "D0", "P0");
         }
 

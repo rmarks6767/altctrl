@@ -29,33 +29,15 @@ namespace glipglop
         {
             devices = new Dictionary<string, Device>();
             components = new Dictionary<Device, List<Component>>();
+            pressedDels = new Dictionary<string, PressedDel>();
+            releasedDels = new Dictionary<string, ReleasedDel>();
             openPorts = new List<string>();
-            StartReading();
+            Reading = true;
+            readingThread = new Thread(new ThreadStart(ReadConnections));
+            readingThread.Start();
         }
 
-        public void ReadConnections()
-        {
-            List<string> ports = SerialPort.GetPortNames().ToList();
-            foreach(string port in openPorts)
-                ports.Remove(port);
 
-            while (Reading)
-            {
-                foreach (string p in ports)
-                {
-                    try
-                    {
-                        Device device = new Device("unknown", p);
-                        device.DataReceived += new SerialDataReceivedEventHandler(ReadData);
-                        device.Open();
-                        devices.Add(p, device);
-                        components.Add(device, new List<Component>());
-                        openPorts.Add(p);
-                    }
-                    catch { continue; }
-                }
-            }
-        }
 
         /// <summary>
         /// Used to (re)start the thread to read devices
@@ -140,6 +122,34 @@ namespace glipglop
                     openPorts.Remove(dev.PortName);
                     dev.Close();
                     Console.WriteLine(ex.Message);
+                }
+            }
+        }
+
+        public void ReadConnections()
+        {
+            while (Reading)
+            {
+                List<string> ports = SerialPort.GetPortNames().ToList();
+
+                foreach (string port in openPorts)
+                    ports.Remove(port);
+
+                foreach (string port in ports)
+                    Console.WriteLine(port);
+
+                foreach (string p in ports)
+                {
+                    try
+                    {
+                        Device device = new Device("unknown", p);
+                        device.DataReceived += new SerialDataReceivedEventHandler(ReadData);
+                        device.Open();
+                        devices.Add(p, device);
+                        components.Add(device, new List<Component>());
+                        openPorts.Add(p);
+                    }
+                    catch (Exception e) { continue; }
                 }
             }
         }
