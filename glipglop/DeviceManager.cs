@@ -81,17 +81,37 @@ namespace glipglop
             Dictionary<Device, List<Component>> comps = new Dictionary<Device, List<Component>>();
             foreach (string device in devs.Keys)
             {
-                Device dev = new Device(device, "COM4");
-                dev.DataReceived += new SerialDataReceivedEventHandler(ReadData);
-                dev.Open();
-
-                devices.Add(device, dev);
-                comps.Add(dev, new List<Component>());
-
-                foreach (string component in devs[device])
+                string[] ports = SerialPort.GetPortNames();
+                Device dev;
+                Boolean check = true;
+                while (check)
                 {
-                    Component comp = new Component(component, device);
-                    comps[dev].Add(comp);
+                    foreach (string p in ports)
+                    {
+                        try
+                        {
+                            dev = new Device(device, p);
+                            dev.DataReceived += new SerialDataReceivedEventHandler(ReadData);
+                            dev.Open();
+                            devices.Add(device, dev);
+                            comps.Add(dev, new List<Component>());
+                            foreach (string component in devs[device])
+                            {
+                                Component comp = new Component(component, device);
+                                comps[dev].Add(comp);
+                            }
+                            Console.WriteLine("Port: " + p);
+                            check = false;
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine("Error: " + e);
+                        }
+                        if (check == false)
+                        {
+                            break;
+                        }
+                    }
                 }
             }
 
