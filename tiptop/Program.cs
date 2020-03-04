@@ -11,9 +11,6 @@ namespace tiptop
             DeviceManager manager = new DeviceManager();
 
             manager.AddPressed(new PressedDel(Pressed), "D0", "P0");
-            manager.AddPressed(new PressedDel(Pressed), "D0", "P1");
-            manager.AddPressed(new PressedDel(Pressed), "D0", "P2");
-            manager.AddPressed(new PressedDel(Pressed), "D0", "P3");
             manager.AddReleased(new ReleasedDel(Released), "D0", "P0");
         }
 

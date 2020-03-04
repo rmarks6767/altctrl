@@ -78,7 +78,7 @@ namespace glipglop
                 try
                 {
                     string serialInput = dev.ReadLine();
-                    Console.WriteLine(serialInput);
+                    Console.WriteLine("Input: " + serialInput);
 
                     // Convert to a json object
                     Data data = JObject.Parse(serialInput).ToObject<Data>();
@@ -102,14 +102,18 @@ namespace glipglop
                     }
 
                     // Check to see if the comp was pressed or released and call the associated delegates
+                    string key = $"{data.Device},{data.Port}";
+
                     if (data.Type == "Pressed")
                     {
-                        pressedDels[$"{data.Device},{data.Port}"].Invoke();
+                        if (pressedDels.ContainsKey(key))
+                            pressedDels[key].Invoke();
                         com.Pressed = true;
                     }
                     else
                     {
-                        releasedDels[$"{data.Device},{data.Port}"].Invoke();
+                        if (releasedDels.ContainsKey(key))
+                            releasedDels[key].Invoke();
                         com.Pressed = false;
                     }
                 }
@@ -134,9 +138,6 @@ namespace glipglop
 
                 foreach (string port in openPorts)
                     ports.Remove(port);
-
-                foreach (string port in ports)
-                    Console.WriteLine(port);
 
                 foreach (string p in ports)
                 {
